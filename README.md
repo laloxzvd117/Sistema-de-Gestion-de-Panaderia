@@ -40,15 +40,17 @@ El sistema está diseñado para ser accesible desde cualquier navegador web, eli
 - Navegador web actualizado (Google Chrome, Mozilla Firefox o Microsoft Edge)
 - Conexión a red local o a internet
 
-### Requerimientos de Software
 
+### Requerimientos de Software
+ 
 - **Python** 3.10 o superior
 - **PostgreSQL** 14 o superior
 - **pip** — gestor de paquetes de Python
 - Dependencias principales:
-  - `flask` o `django` — framework de desarrollo web
+  - `fastapi` — framework de desarrollo web
   - `psycopg2` — adaptador de conexión con PostgreSQL
   - `json` — módulo incluido en la librería estándar de Python
+    
 
 ### Instalación y Configuración
 
