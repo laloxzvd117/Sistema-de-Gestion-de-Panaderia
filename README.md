@@ -56,7 +56,7 @@ El sistema está diseñado para ser accesible desde cualquier navegador web, eli
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/tu-usuario/gestion-panaderia.git
+   git clone https://github.com/laloxzvd117/gestion-panaderia.git
    cd gestion-panaderia
    ```
 
