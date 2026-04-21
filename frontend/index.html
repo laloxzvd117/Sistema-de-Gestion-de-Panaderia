@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ERP Panadería</title>
+<link rel="stylesheet" href="/css/styles.css"/>
+</head>
+<body>
+
+<!-- ── TOAST CONTAINER ── -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════
+     LOGIN PAGE
+══════════════════════════════════════ -->
+<div id="login-page">
+  <div class="login-left">
+    <div class="login-decor">🥖</div>
+    <div class="login-brand">
+      <h1>ERP<br/>Panadería</h1>
+      <p>Sistema Integral de Gestión<br/>y Punto de Venta</p>
+    </div>
+  </div>
+  <div class="login-right">
+    <h2>Bienvenido</h2>
+    <p class="sub">Inicia sesión para acceder al sistema</p>
+
+    <div class="form-group">
+      <label class="form-label">Usuario</label>
+      <input id="inp-tel" class="form-control" type="text" placeholder="Tu usuario" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <div style="position:relative">
+        <input id="inp-pass" class="form-control" type="password" placeholder="••••••••" autocomplete="current-password" style="padding-right:44px"/>
+        <button type="button" onclick="toggleVerPass()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;padding:0;line-height:1" id="btn-eye">👁️</button>
+      </div>
+    </div>
+    <button id="btn-login" class="login-btn" onclick="doLogin()">Ingresar al Sistema</button>
+
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP SHELL (oculto hasta login)
+══════════════════════════════════════ -->
+<div id="app" style="display:none">
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="sidebar-logo">
+      <h2>🥖 ERP Panadería</h2>
+      <p>Sistema de Gestión</p>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-name" id="sb-name">—</div>
+      <div class="user-role" id="sb-role">—</div>
+    </div>
+
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('pos')" data-page="pos">
+      <span class="icon">🛒</span> Caja / POS
+    </div>
+
+    <div class="nav-section">Operaciones</div>
+    <div class="nav-item" onclick="showPage('inventario')" data-page="inventario">
+      <span class="icon">📦</span> Insumos
+    </div>
+    <div class="nav-item" onclick="showPage('recetas')" data-page="recetas">
+      <span class="icon">📋</span> Recetas
+    </div>
+    <div class="nav-item" onclick="showPage('produccion')" data-page="produccion">
+      <span class="icon">🧑‍🍳</span> Producción
+    </div>
+    <div class="nav-item" onclick="showPage('productos')" data-page="productos">
+      <span class="icon">🍞</span> Productos
+    </div>
+
+    <div class="nav-section">Administración</div>
+    <div class="nav-item" onclick="showPage('proveedores')" data-page="proveedores">
+      <span class="icon">🚚</span> Proveedores
+    </div>
+    <div class="nav-item" onclick="showPage('empleados')" data-page="empleados">
+      <span class="icon">👥</span> Recursos Humanos
+    </div>
+    <div class="nav-item" onclick="showPage('reportes')" data-page="reportes">
+      <span class="icon">📈</span> Reportes B.I.
+    </div>
+
+    <div class="sidebar-bottom">
+      <button class="btn-logout" onclick="doLogout()">↩ Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <h1 id="page-title">Dashboard</h1>
+      <div class="topbar-right">
+        <span id="tb-date"></span>
+      </div>
+    </div>
+
+    <div id="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="page-dashboard" class="page-view active">
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi-card"><div class="kpi-label">Ventas hoy</div><div class="kpi-value" id="kpi-ventas">—</div><div class="kpi-sub">transacciones</div></div>
+          <div class="kpi-card"><div class="kpi-label">Ingresos hoy</div><div class="kpi-value" id="kpi-ingresos">—</div><div class="kpi-sub">pesos MXN</div></div>
+          <div class="kpi-card" id="kpi-card-stock"><div class="kpi-label">Stock bajo</div><div class="kpi-value" id="kpi-stock">—</div><div class="kpi-sub">insumos críticos</div></div>
+          <div class="kpi-card" id="kpi-card-emp"><div class="kpi-label">Empleados activos</div><div class="kpi-value" id="kpi-emp">—</div><div class="kpi-sub">en nómina</div></div>
+          <div class="kpi-card" id="kpi-card-lotes"><div class="kpi-label">Lotes hoy</div><div class="kpi-value" id="kpi-lotes">—</div><div class="kpi-sub">producción</div></div>
+        </div>
+        <!-- Gráfica de ventas (solo admin) -->
+        <div id="dash-grafica-cont" style="display:none;margin-bottom:20px">
+          <div class="card">
+            <div class="card-title">📈 Ingresos y ventas — últimos 7 días</div>
+            <div style="height:220px;position:relative">
+              <canvas id="dash-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📋 Últimas ventas</div>
+          <div class="table-wrap">
+            <table id="tbl-ventas-dash">
+              <thead><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Fecha</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="dash-paginacion" style="display:flex;gap:6px;align-items:center;margin-top:14px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+
+      <!-- ── POS ── -->
+      <div id="page-pos" class="page-view">
+        <div class="pos-layout">
+          <!-- Izquierda -->
+          <div class="pos-left">
+            <div class="card" style="padding:16px">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <div class="search-box" style="flex:1;min-width:180px">
+                  <span class="icon">🔍</span>
+                  <input id="pos-search" class="form-control" placeholder="Buscar producto…" oninput="buscarProductosPOS()"/>
+                </div>
+                <select id="pos-cliente" class="form-control" style="width:200px" onchange="recalcularTotales()"></select>
+              </div>
+            </div>
+            <div id="pos-products" class="product-grid"></div>
+          </div>
+
+          <!-- Derecha: carrito -->
+          <div class="pos-right">
+            <div style="padding:16px;border-bottom:1px solid var(--border);font-weight:600;font-size:.95rem">
+              🛒 Carrito
+            </div>
+            <div class="carrito-items" id="carrito-items">
+              <div class="empty-state"><div class="icon">🛒</div><p>Agrega productos al carrito</p></div>
+            </div>
+            <div class="carrito-totales">
+              <div class="tot-row"><span>Subtotal</span><span id="tot-sub">$0.00</span></div>
+              <div class="tot-row"><span id="tot-desc-lbl">Descuento (0%)</span><span id="tot-desc">-$0.00</span></div>
+              <div class="tot-row"><span>IVA 16%</span><span id="tot-iva">$0.00</span></div>
+              <div class="tot-row total"><span>Total</span><span id="tot-total">$0.00</span></div>
+              <button class="btn btn-success" style="width:100%;margin-top:12px;padding:13px;font-size:.95rem" onclick="procesarVenta()">
+                ✅ Procesar Venta
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── INVENTARIO ── -->
+      <div id="page-inventario" class="page-view">
+        <div class="section-header">
+          <h2>📦 Insumos</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="search-box">
+              <span class="icon">🔍</span>
+              <input id="insumos-busqueda" class="form-control" placeholder="Buscar insumo…"
+                     oninput="filtrarInsumos(this.value)" style="width:200px"/>
+            </div>
+            <button class="btn btn-primary" onclick="abrirModalInsumo()">+ Nuevo insumo</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table id="tbl-inv">
+              <thead><tr><th>#</th><th>Nombre</th><th>Stock</th><th>Unidad</th><th>Costo Unit.</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RECETAS ── -->
+      <div id="page-recetas" class="page-view">
+        <div class="section-header">
+          <h2>📋 Recetas</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="search-box">
+              <span class="icon">🔍</span>
+              <input id="recetas-busqueda" class="form-control" placeholder="Buscar receta o producto…"
+                     oninput="filtrarRecetas(this.value)" style="width:220px"/>
+            </div>
+            <button class="btn btn-primary" onclick="abrirModalReceta()">+ Nueva receta</button>
+          </div>
+        </div>
+        <div id="recetas-lista"></div>
+      </div>
+
+      <!-- ── PRODUCCIÓN ── -->
+      <div id="page-produccion" class="page-view">
+        <div class="section-header"><h2>🧑‍🍳 Producción</h2></div>
+
+        <!-- Tabs -->
+        <div class="tabs" style="max-width:500px">
+          <button class="tab-btn prod-tab active" data-tab="planificar" onclick="switchProduccionTab('planificar')">🔥 Producir Lote</button>
+          <button class="tab-btn prod-tab" data-tab="registrar" onclick="switchProduccionTab('registrar')">📋 Registrar Lote</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+          <!-- Panel izquierdo: formularios -->
+          <div>
+            <!-- PANEL PLANIFICAR -->
+            <div id="panel-planificar" class="prod-panel card">
+              <div class="card-title">🔥 Producir Lote</div>
+              <div class="form-group">
+                <label class="form-label">Buscar producto</label>
+                <input class="form-control" placeholder="Escribe para filtrar…" oninput="filtrarSelectProduccion('plan-producto', this.value)"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Producto a producir</label>
+                <select id="plan-producto" class="form-control" onchange="onProductoChange('plan-producto')"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cantidad planificada</label>
+                <input id="plan-estimada" class="form-control" type="number" min="1" placeholder="Ej: 50" oninput="onProductoChange('plan-producto')"/>
+              </div>
+              <div id="plan-insumos" style="margin:12px 0"></div>
+              <button class="btn btn-primary" style="width:100%;color:#fff" onclick="planificarLote()">
+                🔥 Producir Lote
+              </button>
+              <div id="plan-resultado"></div>
+            </div>
+
+            <!-- PANEL REGISTRAR -->
+            <div id="panel-registrar" class="prod-panel card" style="display:none">
+              <div class="card-title">📋 Registrar Resultado</div>
+              <div class="form-group">
+                <label class="form-label">Buscar lote</label>
+                <input id="reg-busqueda" class="form-control" placeholder="Escribe nombre del producto…"
+                       oninput="cargarLotesPendientes(this.value)"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Seleccionar Lote</label>
+                <select id="reg-codigo" class="form-control"></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cantidad Lograda (Real)</label>
+                <input id="reg-lograda" class="form-control" type="number" min="1" placeholder="Ej: 48"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Horas Hombre Trabajadas</label>
+                <input id="reg-horas" class="form-control" type="number" step="0.5" min="0.5" placeholder="Ej: 2.5"/>
+              </div>
+              <button class="btn btn-primary" style="width:100%;color:#fff" onclick="registrarResultadoLote()">
+                ✅ Registrar Lote
+              </button>
+              <div id="reg-resultado"></div>
+            </div>
+          </div>
+
+          <!-- Panel derecho: historial -->
+          <div class="card" style="padding:0">
+            <div style="padding:16px 20px;font-weight:600;border-bottom:1px solid var(--border)">Historial de Producción</div>
+            <div class="table-wrap" style="border:none">
+              <table id="tbl-produccion">
+                <thead><tr><th>Producto</th><th>Fecha</th><th>Cantidad</th><th>Costo Unit.</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PRODUCTOS ── -->
+      <div id="page-productos" class="page-view">
+        <div class="section-header">
+          <h2>🍞 Productos</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="search-box">
+              <span class="icon">🔍</span>
+              <input id="productos-busqueda" class="form-control" placeholder="Buscar producto…"
+                     oninput="filtrarProductos(this.value)" style="width:200px"/>
+            </div>
+            <button class="btn btn-primary" onclick="abrirModalProducto()">+ Nuevo producto</button>
+          </div>
+        </div>
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table id="tbl-productos">
+              <thead><tr><th>#</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Tiempo Elab.</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PROVEEDORES ── -->
+      <div id="page-proveedores" class="page-view">
+        <div class="tabs">
+          <button class="tab-btn prov-tab active" data-tab="lista" onclick="switchProvTab('lista',this)">🚚 Proveedores</button>
+          <button class="tab-btn prov-tab" data-tab="nueva-compra" onclick="switchProvTab('nueva-compra',this)">🛒 Nueva Compra</button>
+          <button class="tab-btn prov-tab" data-tab="historial" onclick="switchProvTab('historial',this)">📜 Historial</button>
+        </div>
+
+        <!-- TAB: Lista proveedores -->
+        <div id="prov-panel-lista" class="prov-panel">
+          <div class="section-header" style="margin-bottom:16px">
+            <h2 style="font-size:1.1rem">Proveedores registrados</h2>
+            <button class="btn btn-primary" onclick="abrirModalProveedor()">+ Nuevo proveedor</button>
+          </div>
+          <div class="card" style="padding:0">
+            <div class="table-wrap">
+              <table id="tbl-proveedores">
+                <thead><tr><th>#</th><th>Nombre</th><th>Dirección</th><th>Teléfono</th><th>Compras</th><th>Total comprado</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Nueva compra -->
+        <div id="prov-panel-nueva-compra" class="prov-panel" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+            <div class="card">
+              <div class="card-title">🛒 Registrar Compra</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group">
+                  <label class="form-label">Proveedor</label>
+                  <select id="compra-proveedor" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Fecha</label>
+                  <input id="compra-fecha" class="form-control" type="date"/>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                  <label class="form-label">Descripción / Referencia</label>
+                  <input id="compra-descripcion" class="form-control" placeholder="Ej: Compra semanal de harina"/>
+                </div>
+              </div>
+
+              <!-- Agregar items -->
+              <div style="background:var(--cream-mid);border-radius:10px;padding:16px;margin:12px 0">
+                <div style="font-weight:600;font-size:.88rem;margin-bottom:10px">Agregar insumo</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                  <input id="compra-item-busqueda" class="form-control" placeholder="Buscar insumo…"
+                         oninput="filtrarInsumosCompra(this.value)"/>
+                  <select id="compra-item-insumo" class="form-control"></select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label">Cantidad</label>
+                    <input id="compra-item-cantidad" class="form-control" type="number" step="0.01" min="0.01" placeholder="0"/>
+                  </div>
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label">Precio unitario ($)</label>
+                    <input id="compra-item-precio" class="form-control" type="number" step="0.01" min="0.01" placeholder="0.00"/>
+                  </div>
+                  <button class="btn btn-primary" onclick="agregarItemCompra()">+ Agregar</button>
+                </div>
+              </div>
+
+              <!-- Tabla de items -->
+              <div class="table-wrap" id="compra-items-wrap">
+                <table id="tbl-compra-items">
+                  <thead><tr><th>Insumo</th><th>Cantidad</th><th>P. Unitario</th><th>Subtotal</th><th></th></tr></thead>
+                  <tbody><tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Agrega insumos a la compra</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="card">
+              <div class="card-title">📋 Resumen</div>
+              <div class="tot-row"><span>Subtotal</span><span id="compra-sub">$0.00</span></div>
+              <div class="tot-row"><span>IVA (16%)</span><span id="compra-iva">$0.00</span></div>
+              <div class="tot-row total"><span>Total</span><span id="compra-total">$0.00</span></div>
+              <button class="btn btn-success" style="width:100%;margin-top:20px;padding:13px"
+                      onclick="procesarCompra()">✅ Registrar Compra</button>
+              <p style="font-size:.78rem;color:var(--text-muted);margin-top:10px;text-align:center">
+                Al registrar, el stock y costo unitario de cada insumo se actualizarán automáticamente.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Historial -->
+        <div id="prov-panel-historial" class="prov-panel" style="display:none">
+          <div class="card" style="padding:0">
+            <div class="table-wrap">
+              <table id="tbl-historial-compras">
+                <thead><tr><th>#</th><th>Proveedor</th><th>Fecha</th><th>Descripción</th><th>Subtotal</th><th>IVA</th><th>Total</th><th></th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EMPLEADOS ── -->
+      <div id="page-empleados" class="page-view">
+        <div class="section-header">
+          <h2>👥 Recursos Humanos</h2>
+          <button class="btn btn-primary" onclick="abrirModalEmpleado()">+ Nuevo empleado</button>
+        </div>
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table id="tbl-emp">
+              <thead><tr><th>#</th><th>Nombre</th><th>Cargo</th><th>Teléfono</th><th>Sueldo</th><th>F. Contrat.</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── REPORTES ── -->
+      <div id="page-reportes" class="page-view">
+        <div class="section-header"><h2>📈 Reportes B.I.</h2></div>
+        <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <label class="form-label">Desde</label>
+            <input id="rep-fi" class="form-control" type="date" style="width:160px"/>
+          </div>
+          <div>
+            <label class="form-label">Hasta</label>
+            <input id="rep-ff" class="form-control" type="date" style="width:160px"/>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('volumen', this)">📊 Volumen de Ventas</button>
+          <button class="tab-btn" onclick="switchTab('rentabilidad', this)">💰 Rentabilidad Neta</button>
+          <button class="tab-btn" onclick="switchTab('mermas', this)">⚠️ Mermas Productivas</button>
+        </div>
+        <div class="card" style="padding:0">
+          <div class="table-wrap" id="rep-table-wrap">
+            <table id="tbl-rep"><thead></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════
+     MODALES
+══════════════════════════════════════ -->
+
+<!-- Modal Insumo -->
+<div id="modal-insumo" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-insumo-title">Nuevo Insumo</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-insumo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="insumo-id"/>
+      <div class="form-group"><label class="form-label">Nombre</label><input id="insumo-nombre" class="form-control"/></div>
+      <div class="form-group"><label class="form-label">Stock Actual</label><input id="insumo-stock" class="form-control" type="number" step="0.01"/></div>
+      <div class="form-group"><label class="form-label">Unidad de Medida</label>
+        <select id="insumo-unidad" class="form-control">
+          <option>kg</option><option>g</option><option>litros</option><option>ml</option>
+          <option>unidades</option><option>Pieza</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Costo Unitario ($)</label><input id="insumo-costo" class="form-control" type="number" step="0.01"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-insumo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarInsumo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Producto -->
+<div id="modal-producto" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-producto-title">Nuevo Producto</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-producto')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="producto-id"/>
+      <div class="form-group"><label class="form-label">Nombre</label><input id="producto-nombre" class="form-control"/></div>
+      <div class="form-group"><label class="form-label">Categoría</label>
+        <select id="producto-cat" class="form-control">
+          <option>Pan Dulce</option><option>Pan Blanco</option><option>Repostería</option>
+          <option>Pastelería</option><option>Galletas</option><option>Otro</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Precio de Venta ($)</label><input id="producto-precio" class="form-control" type="number" step="0.01"/></div>
+      <div class="form-group"><label class="form-label">Tiempo de Elaboración (min)</label><input id="producto-tiempo" class="form-control" type="number"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-producto')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Empleado -->
+<div id="modal-empleado" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="emp-modal-title">Nuevo Empleado</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-empleado')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="emp-id"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Nombre</label><input id="emp-nombre" class="form-control" placeholder="Ej: Carlos"/></div>
+        <div class="form-group"><label class="form-label">Apellidos</label><input id="emp-apellidos" class="form-control" placeholder="Ej: López García"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Cargo</label><select id="emp-cargo" class="form-control"></select></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Teléfono</label><input id="emp-tel" class="form-control" placeholder="Ej: 2291234567"/></div>
+        <div class="form-group">
+          <label class="form-label">Usuario <span style="font-size:.7rem;color:var(--amber-dark);font-weight:400">↑ para iniciar sesión</span></label>
+          <input id="emp-usuario" class="form-control" placeholder="Ej: carlos.lopez" oninput="this.value=this.value.replace(/\s/g,'')"/>
+        </div>
+      </div>
+      <div id="emp-pass-group" class="form-group">
+        <label class="form-label">Contraseña</label>
+        <div style="position:relative">
+          <input id="emp-pass" class="form-control" type="password" placeholder="Mínimo 4 caracteres" style="padding-right:44px"/>
+          <button type="button" onclick="toggleVerPassEmp()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;padding:0" id="btn-eye-emp">👁️</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label class="form-label">Sueldo ($)</label><input id="emp-sueldo" class="form-control" type="number" placeholder="Ej: 8000"/></div>
+        <div class="form-group"><label class="form-label">Horas/mes</label><input id="emp-horas" class="form-control" type="number" value="160"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Fecha Contratación</label><input id="emp-fecha" class="form-control" type="date"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-empleado')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEmpleado()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cambiar Contraseña -->
+<div id="modal-password" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:380px">
+    <div class="modal-header">
+      <h3>🔑 Cambiar Contraseña</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-password')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pwd-emp-id"/>
+      <div style="background:var(--amber-light);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:.85rem;color:var(--amber-dark)">
+        Empleado: <strong id="pwd-emp-nombre"></strong>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nueva Contraseña</label>
+        <input id="pwd-nueva" class="form-control" type="password" placeholder="Mínimo 4 caracteres"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar Contraseña</label>
+        <input id="pwd-confirmar" class="form-control" type="password" placeholder="Repite la contraseña"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-password')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPassword()">Actualizar Contraseña</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cantidad POS -->
+<div id="modal-qty" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:300px">
+    <div class="modal-header">
+      <h3 id="modal-qty-title">Cantidad</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-qty')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Cantidad</label>
+        <input id="qty-input" class="form-control" type="number" min="1" step="1" value="1"/>
+      </div>
+      <p id="qty-stock" style="font-size:.8rem;color:var(--text-muted);margin-top:4px"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-qty')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarCantidad()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Proveedor -->
+<div id="modal-proveedor" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <h3 id="modal-prov-titulo">Nuevo Proveedor</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-proveedor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prov-id"/>
+      <div class="form-group"><label class="form-label">Nombre</label><input id="prov-nombre" class="form-control" placeholder="Ej: Molinos del Norte"/></div>
+      <div class="form-group"><label class="form-label">Dirección</label><input id="prov-direccion" class="form-control" placeholder="Calle y número"/></div>
+      <div class="form-group"><label class="form-label">Teléfono</label><input id="prov-tel" class="form-control" placeholder="Ej: 8001234567"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-proveedor')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarProveedor()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalle Compra -->
+<div id="modal-detalle-compra" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <h3 id="detalle-compra-titulo">Detalle de Compra</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-detalle-compra')">✕</button>
+    </div>
+    <div class="modal-body" id="detalle-compra-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-detalle-compra')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmación Genérico -->
+<div id="modal-confirmar" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h3 id="confirm-titulo">Confirmar acción</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-confirmar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-mensaje" style="white-space:pre-line;font-size:.92rem;line-height:1.6;color:var(--text)"></p>
+    </div>
+    <div class="modal-footer">
+      <button id="confirm-cancel" class="btn btn-secondary" onclick="cerrarModal('modal-confirmar')">Cancelar</button>
+      <button id="confirm-ok" class="btn btn-danger">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Baja Empleado -->
+<div id="modal-baja" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:400px">
+    <div class="modal-header">
+      <h3>🚫 Dar de Baja</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-baja')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="baja-emp-id"/>
+      <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:16px">El empleado perderá acceso al sistema. Esta acción queda registrada.</p>
+      <div class="form-group">
+        <label class="form-label">Motivo de baja</label>
+        <textarea id="baja-motivo" class="form-control" rows="3" placeholder="Ej: Renuncia voluntaria, Término de contrato…" style="resize:none"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-baja')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarBaja()">Dar de Baja</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nueva/Editar Receta -->
+<div id="modal-receta" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:560px">
+    <div class="modal-header">
+      <h3 id="modal-receta-titulo">Nueva Receta</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-receta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="receta-id"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Producto</label>
+          <select id="receta-producto" class="form-control"></select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Nombre de la Receta</label>
+          <input id="receta-nombre" class="form-control" placeholder="Ej: Receta Conchas Tradicional"/>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Descripción</label>
+          <input id="receta-descripcion" class="form-control" placeholder="Breve descripción del proceso"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tiempo Estimado (min)</label>
+          <input id="receta-tiempo" class="form-control" type="number" min="1" placeholder="120"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rendimiento base <span style="font-size:.72rem;color:var(--amber-dark)">(pzas que produce esta receta)</span></label>
+          <input id="receta-rendimiento" class="form-control" type="number" min="1" value="10"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-receta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarReceta()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Agregar Insumo a Receta -->
+<div id="modal-insumo-receta" class="modal-backdrop" style="display:none">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h3>Agregar Insumo</h3>
+      <button class="modal-close" onclick="cerrarModal('modal-insumo-receta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ir-receta-id"/>
+      <input type="hidden" id="ir-detalle-id"/>
+      <div class="form-group">
+        <label class="form-label">Buscar insumo</label>
+        <input id="ir-busqueda" class="form-control" placeholder="Escribe para filtrar…"
+               oninput="filtrarInsumosModal(this.value)" style="margin-bottom:6px"/>
+        <label class="form-label">Insumo</label>
+        <select id="ir-insumo" class="form-control" size="5" style="height:auto" onchange="actualizarUnidadLabel()"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cantidad <span id="ir-unidad-label" style="color:var(--text-muted);font-weight:400"></span></label>
+        <input id="ir-cantidad" class="form-control" type="number" step="0.001" min="0.001" placeholder="Ej: 500"/>
+      </div>
+      <div style="font-size:.82rem;color:var(--text-muted);margin-top:4px">
+        Esta cantidad es para el rendimiento base de la receta.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cerrarModal('modal-insumo-receta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarInsumoReceta()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/modulos/dashboard.js"></script>
+<script src="/js/modulos/pos.js"></script>
+<script src="/js/modulos/inventario.js"></script>
+<script src="/js/modulos/produccion.js"></script>
+<script src="/js/modulos/productos.js"></script>
+<script src="/js/modulos/empleados.js"></script>
+<script src="/js/modulos/reportes.js"></script>
+<script src="/js/modulos/recetas.js"></script>
+<script src="/js/modulos/proveedores.js"></script>
+</body>
+</html>
