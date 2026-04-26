@@ -158,13 +158,31 @@ async function registrarResultadoLote() {
   } catch(e) { toast('Error: ' + e.message, 'error'); }
 }
 
+let _historialProduccion = [];
+let _paginaProduccion    = 1;
+const _porPaginaProd     = 10;
+
 async function cargarHistorialProduccion() {
   try {
-    const hist = await api.getHistorialProduccion();
-    const tbody = tbBody('tbl-produccion');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    hist.forEach(h => {
+    _historialProduccion = await api.getHistorialProduccion();
+    _paginaProduccion = 1;
+    renderHistorialProduccion();
+  } catch(e) {}
+}
+
+function renderHistorialProduccion() {
+  const tbody     = tbBody('tbl-produccion');
+  if (!tbody) return;
+  const total     = _historialProduccion.length;
+  const totalPags = Math.ceil(total / _porPaginaProd) || 1;
+  const inicio    = (_paginaProduccion - 1) * _porPaginaProd;
+  const pagina    = _historialProduccion.slice(inicio, inicio + _porPaginaProd);
+
+  tbody.innerHTML = '';
+  if (!pagina.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted)">Sin lotes registrados</td></tr>';
+  } else {
+    pagina.forEach(h => {
       tbody.innerHTML += `<tr>
         <td><strong>${h.producto}</strong></td>
         <td>${h.fecha}</td>
@@ -172,8 +190,30 @@ async function cargarHistorialProduccion() {
         <td>${fmt(h.costo_unitario)}</td>
       </tr>`;
     });
-    if (!hist.length) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted)">Sin lotes registrados</td></tr>';
-  } catch(e) {}
+  }
+
+  // Paginación
+  const pagCont = document.getElementById('prod-hist-paginacion');
+  if (!pagCont) return;
+  if (totalPags <= 1) {
+    pagCont.innerHTML = `<span style="font-size:.8rem;color:var(--text-muted)">${total} lotes registrados</span>`;
+    return;
+  }
+  let btns = '';
+  btns += `<button class="btn btn-secondary btn-sm" onclick="cambiarPagProd(${_paginaProduccion-1})" ${_paginaProduccion===1?'disabled':''}>‹</button>`;
+  for (let i = 1; i <= totalPags; i++) {
+    btns += `<button class="btn btn-sm ${i===_paginaProduccion?'btn-primary':'btn-secondary'}" onclick="cambiarPagProd(${i})">${i}</button>`;
+  }
+  btns += `<button class="btn btn-secondary btn-sm" onclick="cambiarPagProd(${_paginaProduccion+1})" ${_paginaProduccion===totalPags?'disabled':''}>›</button>`;
+  btns += `<span style="font-size:.8rem;color:var(--text-muted);align-self:center">${total} lotes</span>`;
+  pagCont.innerHTML = btns;
+}
+
+function cambiarPagProd(pag) {
+  const totalPags = Math.ceil(_historialProduccion.length / _porPaginaProd) || 1;
+  if (pag < 1 || pag > totalPags) return;
+  _paginaProduccion = pag;
+  renderHistorialProduccion();
 }
 
 // ── PRODUCTOS ────────────────────────────────────────────────
@@ -477,4 +517,3 @@ function filtrarSelectProduccion(selectId, texto) {
   // Disparar cambio para actualizar insumos
   if (filtrados.length) onProductoChange(selectId);
 }
-
