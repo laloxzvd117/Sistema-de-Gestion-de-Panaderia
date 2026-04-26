@@ -321,7 +321,7 @@ def receta_para_cantidad(id_producto: int, cantidad: int):
     return obtener_receta_producto(id_producto, cantidad)
 
 @router.get("/historial")
-def historial_produccion(limite: int = 30):
+def historial_produccion(limite: int = 200):
     try:
         conn = get_connection()
         cur = conn.cursor()
@@ -353,7 +353,9 @@ def lotes_pendientes(busqueda: str = ""):
         """
         params = []
         if busqueda:
-            query += " AND p.nombre ILIKE %s"
+            # Buscar por nombre de producto O por código de lote (LOTE-XXXX)
+            query += " AND (p.nombre ILIKE %s OR CONCAT('LOTE-', LPAD(pe.id_proceso::text, 4, '0')) ILIKE %s)"
+            params.append(f"%{busqueda}%")
             params.append(f"%{busqueda}%")
         query += " ORDER BY pe.id_proceso DESC"
         cur.execute(query, params)
