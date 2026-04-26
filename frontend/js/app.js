@@ -83,15 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Navegación ───────────────────────────────────────────────
 const PAGE_TITLES = {
   dashboard: 'Dashboard', pos: 'Caja Inteligente (POS)',
-  inventario: 'Insumos', recetas: 'Recetas',
+  inventario: 'Insumos', alertas: 'Alertas de Stock', recetas: 'Recetas',
   produccion: 'Producción', productos: 'Productos',
-  proveedores: 'Proveedores', empleados: 'Recursos Humanos', reportes: 'Reportes B.I.'
+  proveedores: 'Proveedores', empleados: 'Recursos Humanos', reportes: 'Reportes'
 };
 
 // Permisos: 1=Gerente(todo), 2=Panadero, 3=Cajero
 const PAGINAS_PERMITIDAS = {
-  1: ['dashboard','pos','inventario','recetas','produccion','productos','proveedores','empleados','reportes'],
-  2: ['dashboard','pos','recetas','produccion'],
+  1: ['dashboard','pos','inventario','alertas','recetas','produccion','productos','proveedores','empleados','reportes'],
+  2: ['dashboard','pos','alertas','recetas','produccion'],
   3: ['dashboard','pos'],
 };
 
@@ -116,7 +116,7 @@ function showPage(page) {
   });
   document.getElementById('page-title').textContent = PAGE_TITLES[page];
   const loaders = { dashboard: loadDashboard, pos: loadPOS, inventario: loadInventario,
-                    recetas: loadRecetas, produccion: loadProduccion, productos: loadProductos,
+                    alertas: loadAlertas, recetas: loadRecetas, produccion: loadProduccion, productos: loadProductos,
                     proveedores: loadProveedores, empleados: loadEmpleados, reportes: loadReportes };
   loaders[page]?.();
 }
