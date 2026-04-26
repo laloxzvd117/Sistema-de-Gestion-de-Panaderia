@@ -2,9 +2,20 @@
 #  Archivo: backend/app.py
 #  Ejecutar: uvicorn backend.app:app --reload
 # ============================================================
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.endswith(('.js', '.css', '.html')):
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        return response
 
 from backend.routers import auth, inventario, empleados, productos, ventas, produccion, reportes, recetas, proveedores
 
@@ -14,6 +25,7 @@ app = FastAPI(
     version     = "1.0.0"
 )
 
+app.add_middleware(NoCacheMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins     = ["*"],
