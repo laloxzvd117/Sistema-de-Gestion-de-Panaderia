@@ -73,6 +73,9 @@
     <div class="nav-item" onclick="showPage('recetas')" data-page="recetas">
       <span class="icon">📋</span> Recetas
     </div>
+    <div class="nav-item" onclick="showPage('alertas')" data-page="alertas">
+      <span class="icon">🔔</span> Alertas Stock <span id="badge-alertas" style="display:none;background:#EF4444;color:#fff;border-radius:999px;padding:1px 7px;font-size:.7rem;margin-left:4px">0</span>
+    </div>
     <div class="nav-item" onclick="showPage('produccion')" data-page="produccion">
       <span class="icon">🧑‍🍳</span> Producción
     </div>
@@ -88,7 +91,7 @@
       <span class="icon">👥</span> Recursos Humanos
     </div>
     <div class="nav-item" onclick="showPage('reportes')" data-page="reportes">
-      <span class="icon">📈</span> Reportes B.I.
+      <span class="icon">📈</span> Reportes
     </div>
 
     <div class="sidebar-bottom">
@@ -127,7 +130,10 @@
         </div>
 
         <div class="card">
-          <div class="card-title">📋 Últimas ventas</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="card-title" style="margin:0">📋 Últimas ventas</div>
+            <button class="btn btn-secondary btn-sm" onclick="loadDashboard()" title="Recargar">🔄 Recargar</button>
+          </div>
           <div class="table-wrap">
             <table id="tbl-ventas-dash">
               <thead><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Fecha</th></tr></thead>
@@ -193,6 +199,46 @@
           <div class="table-wrap">
             <table id="tbl-inv">
               <thead><tr><th>#</th><th>Nombre</th><th>Stock</th><th>Unidad</th><th>Costo Unit.</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ALERTAS ── -->
+      <div id="page-alertas" class="page-view">
+        <div class="section-header">
+          <h2>🔔 Alertas de Stock</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="form-group" style="margin:0;display:flex;align-items:center;gap:8px">
+              <label class="form-label" style="margin:0;white-space:nowrap">Mínimo global (u):</label>
+              <input id="alerta-minimo" class="form-control" type="number" value="10" min="1" style="width:80px" oninput="loadAlertas()"/>
+            </div>
+            <button class="btn btn-secondary" onclick="loadAlertas()">🔄 Actualizar</button>
+          </div>
+        </div>
+
+        <!-- KPIs alertas -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+          <div class="card" style="border-left:4px solid #EF4444;text-align:center;padding:20px">
+            <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Críticos (stock = 0)</div>
+            <div id="alerta-kpi-critico" style="font-size:2rem;font-weight:700;color:#EF4444">0</div>
+          </div>
+          <div class="card" style="border-left:4px solid #D97706;text-align:center;padding:20px">
+            <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Stock Bajo</div>
+            <div id="alerta-kpi-bajo" style="font-size:2rem;font-weight:700;color:#D97706">0</div>
+          </div>
+          <div class="card" style="border-left:4px solid #059669;text-align:center;padding:20px">
+            <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Insumos OK</div>
+            <div id="alerta-kpi-ok" style="font-size:2rem;font-weight:700;color:#059669">0</div>
+          </div>
+        </div>
+
+        <!-- Tabla alertas -->
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table id="tbl-alertas">
+              <thead><tr><th>Insumo</th><th>Stock Actual</th><th>Unidad</th><th>Mínimo</th><th>Estado</th><th>Acción</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
@@ -287,6 +333,8 @@
                 <tbody></tbody>
               </table>
             </div>
+            <div id="prod-hist-paginacion" style="display:flex;gap:6px;align-items:center;padding:12px 16px;flex-wrap:wrap;border-top:1px solid var(--border)"></div>
+            <div id="prod-hist-paginacion" style="display:flex;gap:6px;align-items:center;padding:12px 16px;flex-wrap:wrap"></div>
           </div>
         </div>
       </div>
@@ -366,17 +414,24 @@
                          oninput="filtrarInsumosCompra(this.value)"/>
                   <select id="compra-item-insumo" class="form-control"></select>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end">
                   <div class="form-group" style="margin:0">
-                    <label class="form-label">Cantidad</label>
-                    <input id="compra-item-cantidad" class="form-control" type="number" step="0.01" min="0.01" placeholder="0"/>
+                    <label class="form-label">Cantidad comprada</label>
+                    <input id="compra-item-cantidad" class="form-control" type="number" step="0.01" min="0.01" placeholder="0" oninput="actualizarPreviewCompra()"/>
                   </div>
                   <div class="form-group" style="margin:0">
-                    <label class="form-label">Precio unitario ($)</label>
-                    <input id="compra-item-precio" class="form-control" type="number" step="0.01" min="0.01" placeholder="0.00"/>
+                    <label class="form-label">Unidad de compra</label>
+                    <select id="compra-item-unidad" class="form-control" onchange="actualizarPreviewCompra()">
+                      <option value="1">— misma unidad —</option>
+                    </select>
                   </div>
-                  <button class="btn btn-primary" onclick="agregarItemCompra()">+ Agregar</button>
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label">Precio por unidad ($)</label>
+                    <input id="compra-item-precio" class="form-control" type="number" step="0.01" min="0.01" placeholder="0.00" oninput="actualizarPreviewCompra()"/>
+                  </div>
+                  <button class="btn btn-primary" onclick="agregarItemCompra()" style="white-space:nowrap">+ Agregar</button>
                 </div>
+                <div id="compra-preview" style="display:none;margin-top:8px;padding:8px 12px;background:#ECFDF5;border-radius:8px;border-left:3px solid #059669;font-size:.82rem;color:#065F46"></div>
               </div>
 
               <!-- Tabla de items -->
@@ -434,7 +489,7 @@
 
       <!-- ── REPORTES ── -->
       <div id="page-reportes" class="page-view">
-        <div class="section-header"><h2>📈 Reportes B.I.</h2></div>
+        <div class="section-header"><h2>📊 Reportes</h2></div>
         <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end">
           <div>
             <label class="form-label">Desde</label>
@@ -443,6 +498,9 @@
           <div>
             <label class="form-label">Hasta</label>
             <input id="rep-ff" class="form-control" type="date" style="width:160px"/>
+          </div>
+          <div style="align-self:flex-end">
+            <button class="btn btn-primary" onclick="generarReportePDF()">📄 Exportar PDF</button>
           </div>
         </div>
         <div class="tabs">
@@ -641,6 +699,67 @@
   </div>
 </div>
 
+<!-- Modal Ticket de Venta -->
+<div id="modal-ticket" class="modal-backdrop" style="display:none;z-index:9998">
+  <div class="modal" style="width:380px">
+    <div class="modal-header" style="border-bottom:none;padding-bottom:8px">
+      <div style="width:100%">
+        <div style="text-align:center;margin-bottom:4px">
+          <div style="font-size:1.4rem">🥖</div>
+          <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--brown)">ERP Panadería</h3>
+          <div style="font-size:.78rem;color:var(--text-muted)">Sistema de Gestión Integral</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="cerrarTicket()" style="position:absolute;right:16px;top:16px">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0 20px 20px">
+      <!-- Línea punteada -->
+      <div style="border-top:2px dashed var(--border);margin:8px 0 14px"></div>
+
+      <!-- Info venta -->
+      <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text-muted);margin-bottom:12px">
+        <div>
+          <div><strong id="ticket-folio">Folio #000</strong></div>
+          <div id="ticket-fecha"></div>
+        </div>
+        <div style="text-align:right">
+          <div id="ticket-cliente"></div>
+          <div id="ticket-cajero"></div>
+        </div>
+      </div>
+
+      <!-- Encabezado productos -->
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:4px;font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;padding:0 0 6px;border-bottom:1px solid var(--border)">
+        <span>Producto</span><span style="text-align:right">Cant.</span><span style="text-align:right">Subtotal</span>
+      </div>
+
+      <!-- Items -->
+      <div id="ticket-items" style="margin:8px 0;font-size:.85rem"></div>
+
+      <!-- Línea punteada -->
+      <div style="border-top:2px dashed var(--border);margin:10px 0"></div>
+
+      <!-- Totales -->
+      <div id="ticket-totales" style="font-size:.88rem"></div>
+
+      <!-- Línea punteada -->
+      <div style="border-top:2px dashed var(--border);margin:12px 0 10px"></div>
+
+      <!-- Footer -->
+      <div style="text-align:center;font-size:.78rem;color:var(--text-muted)">
+        <div style="font-weight:600;color:var(--brown);margin-bottom:4px">¡Gracias por su compra!</div>
+        <div>Vuelva pronto 🥐</div>
+      </div>
+
+      <!-- Botones -->
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-secondary" style="flex:1" onclick="imprimirTicket()">🖨️ Imprimir</button>
+        <button class="btn btn-primary" style="flex:1" onclick="cerrarTicket()">✅ Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Confirmación Genérico -->
 <div id="modal-confirmar" class="modal-backdrop" style="display:none">
   <div class="modal" style="width:420px">
@@ -754,14 +873,110 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/app.js"></script>
-<script src="/js/modulos/dashboard.js"></script>
-<script src="/js/modulos/pos.js"></script>
-<script src="/js/modulos/inventario.js"></script>
-<script src="/js/modulos/produccion.js"></script>
-<script src="/js/modulos/productos.js"></script>
-<script src="/js/modulos/empleados.js"></script>
-<script src="/js/modulos/reportes.js"></script>
-<script src="/js/modulos/recetas.js"></script>
-<script src="/js/modulos/proveedores.js"></script>
+<script src="/js/modulos/dashboard.js?v=4e2e1e66"></script>
+<script src="/js/modulos/pos.js?v=4f508ae5"></script>
+<script src="/js/modulos/inventario.js?v=a3f393b9"></script>
+<script src="/js/modulos/produccion.js?v=0461d250"></script>
+<script src="/js/modulos/productos.js?v=527fd0cb"></script>
+<script src="/js/modulos/empleados.js?v=8811965a"></script>
+<script src="/js/modulos/reportes.js?v=8cfa36e8"></script>
+<script src="/js/modulos/alertas.js"></script>
+<script src="/js/modulos/recetas.js?v=789fd4d6"></script>
+<script src="/js/modulos/proveedores.js?v=aa88ffef"></script>
+
+<script>
+// ============================================================
+//  Exportación de reportes a PDF — definida inline en HTML
+// ============================================================
+function generarReportePDF() {
+  try {
+    const fi   = document.getElementById('rep-fi').value;
+    const ff   = document.getElementById('rep-ff').value;
+    const tipo = (typeof reporteActual !== 'undefined') ? reporteActual : 'volumen';
+
+    const tabla = document.getElementById('tbl-rep');
+    if (!tabla) {
+      alert('No se encontró la tabla de reporte.');
+      return;
+    }
+
+    const heads = Array.from(tabla.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    const filas = Array.from(tabla.querySelectorAll('tbody tr')).map(tr =>
+      Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim())
+    );
+
+    if (!filas.length || (filas.length === 1 && filas[0].length <= 1)) {
+      alert('No hay datos para exportar en este reporte.');
+      return;
+    }
+
+    const titulos = {
+      volumen: 'Volumen de Ventas',
+      rentabilidad: 'Rentabilidad Neta',
+      mermas: 'Mermas Productivas'
+    };
+    const titulo  = titulos[tipo] || 'Reporte';
+    const periodo = (fi || 'inicio') + ' al ' + (ff || 'hoy');
+    const fecha   = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+    const hora    = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit' });
+
+    let filasHTML = '';
+    filas.forEach((f, i) => {
+      const bg = i % 2 === 0 ? '#ffffff' : '#FFF8EC';
+      let celdas = '';
+      f.forEach(c => {
+        celdas += '<td style="padding:8px 12px;border-bottom:1px solid #EEE;font-size:12px;">' + c + '</td>';
+      });
+      filasHTML += '<tr style="background:' + bg + ';">' + celdas + '</tr>';
+    });
+
+    let headsHTML = '';
+    heads.forEach(h => {
+      headsHTML += '<th style="background:#3D1A00;color:#fff;padding:10px 12px;font-size:12px;text-align:left;">' + h + '</th>';
+    });
+
+    const html =
+      '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+      '<title>Reporte ' + titulo + '</title>' +
+      '<style>' +
+      '  body { font-family: Arial, sans-serif; padding: 32px; color: #1a1a1a; margin:0; }' +
+      '  .header { text-align:center; margin-bottom:24px; border-bottom:3px solid #D97706; padding-bottom:16px; }' +
+      '  .logo { font-size:32px; }' +
+      '  .empresa { font-size:22px; font-weight:700; color:#3D1A00; margin:4px 0; }' +
+      '  .subtitulo { font-size:13px; color:#888; }' +
+      '  .reporte-titulo { font-size:18px; font-weight:700; color:#D97706; margin:16px 0 4px; }' +
+      '  .periodo { font-size:12px; color:#666; margin-bottom:20px; }' +
+      '  table { width:100%; border-collapse:collapse; margin-top:8px; }' +
+      '  .footer { margin-top:32px; text-align:center; font-size:11px; color:#aaa; border-top:1px solid #eee; padding-top:12px; }' +
+      '  @media print { body { padding:16px; } }' +
+      '</style></head><body>' +
+      '<div class="header">' +
+      '  <div class="logo">🥖</div>' +
+      '  <div class="empresa">ERP Panadería</div>' +
+      '  <div class="subtitulo">Sistema de Gestión Integral</div>' +
+      '</div>' +
+      '<div class="reporte-titulo">📊 ' + titulo + '</div>' +
+      '<div class="periodo"><strong>Período:</strong> ' + periodo + ' &nbsp; | &nbsp; <strong>Generado:</strong> ' + fecha + ' ' + hora + '</div>' +
+      '<table><thead><tr>' + headsHTML + '</tr></thead><tbody>' + filasHTML + '</tbody></table>' +
+      '<div class="footer">ERP Panadería — Reporte generado el ' + fecha + ' a las ' + hora + '</div>' +
+      '</body></html>';
+
+    const ventana = window.open('', '_blank', 'width=900,height=700');
+    if (!ventana) {
+      alert('Permite las ventanas emergentes para generar el reporte.');
+      return;
+    }
+    ventana.document.open();
+    ventana.document.write(html);
+    ventana.document.close();
+    setTimeout(function() {
+      try { ventana.print(); } catch(err) { console.error('Error al imprimir:', err); }
+    }, 500);
+  } catch (err) {
+    console.error('Error generando PDF:', err);
+    alert('Error generando el PDF: ' + err.message);
+  }
+}
+</script>
 </body>
 </html>
