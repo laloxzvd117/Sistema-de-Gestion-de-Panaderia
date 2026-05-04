@@ -87,6 +87,9 @@
     <div class="nav-item" onclick="showPage('proveedores')" data-page="proveedores">
       <span class="icon">🚚</span> Proveedores
     </div>
+    <div class="nav-item" onclick="showPage('logs')" data-page="logs">
+      <span class="icon">📜</span> Historial Actividad
+    </div>
     <div class="nav-item" onclick="showPage('empleados')" data-page="empleados">
       <span class="icon">👥</span> Recursos Humanos
     </div>
@@ -95,6 +98,9 @@
     </div>
 
     <div class="sidebar-bottom">
+      <div class="nav-item" onclick="showPage('perfil')" data-page="perfil" style="margin-bottom:8px">
+        <span class="icon">👤</span> Mi Perfil
+      </div>
       <button class="btn-logout" onclick="doLogout()">↩ Cerrar Sesión</button>
     </div>
   </nav>
@@ -466,6 +472,97 @@
                 <thead><tr><th>#</th><th>Proveedor</th><th>Fecha</th><th>Descripción</th><th>Subtotal</th><th>IVA</th><th>Total</th><th></th></tr></thead>
                 <tbody></tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LOGS ── -->
+      <div id="page-logs" class="page-view">
+        <div class="section-header">
+          <h2>📜 Historial de Actividad</h2>
+          <button class="btn btn-secondary" onclick="loadLogs()">🔄 Actualizar</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Total Registros</div>
+            <div id="log-kpi-total" style="font-size:2rem;font-weight:700;color:var(--brown)">—</div>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Hoy</div>
+            <div id="log-kpi-hoy" style="font-size:2rem;font-weight:700;color:var(--amber-dark)">—</div>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Usuarios Activos</div>
+            <div id="log-kpi-users" style="font-size:2rem;font-weight:700;color:#059669">—</div>
+          </div>
+          <div class="card" style="text-align:center;padding:20px">
+            <div style="font-size:.72rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Módulo más usado</div>
+            <div id="log-kpi-top" style="font-size:1.2rem;font-weight:700;color:var(--brown)">—</div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div class="form-group" style="margin:0;flex:1;min-width:180px">
+              <label class="form-label">Buscar</label>
+              <input id="log-busqueda" class="form-control" placeholder="Empleado, descripción…" oninput="filtrarLogs()"/>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Módulo</label>
+              <select id="log-filtro-modulo" class="form-control" onchange="filtrarLogs()">
+                <option value="">Todos</option>
+                <option value="auth">Auth</option>
+                <option value="ventas">Ventas</option>
+                <option value="produccion">Producción</option>
+                <option value="inventario">Inventario</option>
+                <option value="empleados">Empleados</option>
+                <option value="recetas">Recetas</option>
+                <option value="proveedores">Proveedores</option>
+                <option value="productos">Productos</option>
+              </select>
+            </div>
+
+
+       
+
+          </div>
+        </div>
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table id="tbl-logs">
+              <thead><tr><th>Fecha</th><th>Empleado</th><th>Acción</th><th>Módulo</th><th>Descripción</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="logs-paginacion" style="display:flex;gap:6px;align-items:center;padding:12px 16px;flex-wrap:wrap;border-top:1px solid var(--border)"></div>
+        </div>
+      </div>
+
+      <!-- ── PERFIL ── -->
+      <div id="page-perfil" class="page-view">
+        <div class="section-header"><h2>👤 Mi Perfil</h2></div>
+        <div style="max-width:480px">
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:20px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+              <div id="perfil-avatar" style="width:72px;height:72px;background:var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;font-weight:700;flex-shrink:0">A</div>
+              <div>
+                <div id="perfil-nombre" style="font-size:1.3rem;font-weight:700;color:var(--brown)">—</div>
+                <div id="perfil-rol" style="font-size:.88rem;color:var(--amber-dark);font-weight:600;margin-top:2px">—</div>
+              </div>
+            </div>
+            <div style="display:grid;gap:0">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)">
+                <span style="color:var(--text-muted);font-size:.88rem">Nombre completo</span>
+                <span id="perfil-nombre2" style="font-weight:600">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)">
+                <span style="color:var(--text-muted);font-size:.88rem">Rol en el sistema</span>
+                <span id="perfil-rol2" style="font-weight:600">—</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0">
+                <span style="color:var(--text-muted);font-size:.88rem">Sesión iniciada</span>
+                <span id="perfil-sesion" style="font-weight:600;font-size:.85rem">—</span>
+              </div>
             </div>
           </div>
         </div>
@@ -881,6 +978,7 @@
 <script src="/js/modulos/empleados.js?v=8811965a"></script>
 <script src="/js/modulos/reportes.js?v=8cfa36e8"></script>
 <script src="/js/modulos/alertas.js"></script>
+<script src="/js/modulos/logs.js"></script>
 <script src="/js/modulos/recetas.js?v=789fd4d6"></script>
 <script src="/js/modulos/proveedores.js?v=aa88ffef"></script>
 
