@@ -17,7 +17,7 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
             response.headers['Expires'] = '0'
         return response
 
-from backend.routers import auth, inventario, empleados, productos, ventas, produccion, reportes, recetas, proveedores
+from backend.routers import auth, inventario, empleados, productos, ventas, produccion, reportes, recetas, proveedores, logs
 
 app = FastAPI(
     title       = "ERP Panadería",
@@ -43,6 +43,7 @@ app.include_router(produccion.router,  prefix="/api/produccion",  tags=["Producc
 app.include_router(reportes.router,    prefix="/api/reportes",    tags=["Reportes BI"])
 app.include_router(recetas.router,     prefix="/api/recetas",     tags=["Recetas"])
 app.include_router(proveedores.router, prefix="/api/proveedores", tags=["Proveedores"])
+app.include_router(logs.router,        prefix="/api/logs",        tags=["Logs"])
 
 app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
 
