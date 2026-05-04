@@ -42,10 +42,16 @@ async function doLogin() {
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('app').style.display        = 'flex';
     document.getElementById('sb-name').textContent = usuario.nombre;
+    document.getElementById('sb-name').style.cursor = 'pointer';
+    document.getElementById('sb-name').onclick = () => showPage('perfil');
     document.getElementById('sb-role').textContent = usuario.rol;
     document.getElementById('tb-date').textContent = new Date().toLocaleDateString('es-MX', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
     configurarSidebarPorRol();
     showPage('dashboard');
+    setTimeout(() => {
+      if (typeof verificarBadgeAlertas === 'function') verificarBadgeAlertas();
+      if (typeof registrarLog === 'function') registrarLog('LOGIN', 'auth', 'Inicio de sesion', 'Usuario: ' + usuario.nombre);
+    }, 800);
   } catch(e) {
     toast(e.message, 'error');
   } finally {
@@ -85,14 +91,15 @@ const PAGE_TITLES = {
   dashboard: 'Dashboard', pos: 'Caja Inteligente (POS)',
   inventario: 'Insumos', alertas: 'Alertas de Stock', recetas: 'Recetas',
   produccion: 'Producción', productos: 'Productos',
-  proveedores: 'Proveedores', empleados: 'Recursos Humanos', reportes: 'Reportes'
+  proveedores: 'Proveedores', empleados: 'Recursos Humanos',
+  reportes: 'Reportes', logs: 'Historial de Actividad', perfil: 'Mi Perfil'
 };
 
 // Permisos: 1=Gerente(todo), 2=Panadero, 3=Cajero
 const PAGINAS_PERMITIDAS = {
-  1: ['dashboard','pos','inventario','alertas','recetas','produccion','productos','proveedores','empleados','reportes'],
-  2: ['dashboard','pos','alertas','recetas','produccion'],
-  3: ['dashboard','pos'],
+  1: ['dashboard','pos','inventario','alertas','recetas','produccion','productos','proveedores','empleados','reportes','logs','perfil'],
+  2: ['dashboard','pos','alertas','recetas','produccion','perfil'],
+  3: ['dashboard','pos','perfil'],
 };
 
 function configurarSidebarPorRol() {
@@ -117,7 +124,8 @@ function showPage(page) {
   document.getElementById('page-title').textContent = PAGE_TITLES[page];
   const loaders = { dashboard: loadDashboard, pos: loadPOS, inventario: loadInventario,
                     alertas: loadAlertas, recetas: loadRecetas, produccion: loadProduccion, productos: loadProductos,
-                    proveedores: loadProveedores, empleados: loadEmpleados, reportes: loadReportes };
+                    proveedores: loadProveedores, empleados: loadEmpleados, reportes: loadReportes,
+                    logs: loadLogs, perfil: loadPerfil };
   loaders[page]?.();
 }
 
