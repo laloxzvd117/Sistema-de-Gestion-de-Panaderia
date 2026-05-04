@@ -1,4 +1,3 @@
-
 // ============================================================
 //  Módulo: pos.js
 // ============================================================
@@ -125,6 +124,15 @@ async function procesarVenta() {
     // Guardar para imprimirTicket()
     _lastTicketItems   = itemsTicket;
     _lastTicketTotales = { subtotal: res.subtotal, descuento: res.descuento, iva: res.iva, total_neto: res.total_neto };
+
+    // Registrar log de venta
+    await registrarLog(
+      'VENTA',
+      'ventas',
+      `Venta #${res.id_venta} — ${clienteNombre}`,
+      `Total: $${res.total_neto.toFixed(2)}`
+    );
+
     carrito = [];
     renderCarrito();
     await buscarProductosPOS();
