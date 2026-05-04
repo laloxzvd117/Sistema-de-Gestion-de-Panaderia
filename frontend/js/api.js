@@ -2,7 +2,7 @@
 //  frontend/js/api.js  — Helper centralizado para llamadas API
 // ============================================================
 
-const BASE = 'http://127.0.0.1:8000/api';
+const BASE = `http://${window.location.hostname}:8000/api`;
 
 async function apiFetch(path, options = {}) {
   const res = await fetch(BASE + path, {
@@ -83,3 +83,7 @@ api.getCompras        = ()      => apiFetch('/proveedores/compras');
 api.getDetalleCompra  = (id)    => apiFetch(`/proveedores/compras/${id}`);
 api.registrarCompra   = (d)     => apiFetch('/proveedores/compras', { method: 'POST', body: JSON.stringify(d) });
 api.getVentasSemana = () => apiFetch("/reportes/ventas-semana");
+// Logs
+api.getLogs        = (params) => apiFetch('/logs/?' + new URLSearchParams(params || {}).toString());
+api.getResumenLogs = ()       => apiFetch('/logs/resumen');
+api.registrarLog   = (d)      => apiFetch('/logs/', { method: 'POST', body: JSON.stringify(d) });
