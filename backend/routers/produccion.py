@@ -402,3 +402,36 @@ def reporte_mermas_produccion():
         } for r in rows]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/lotes-semana")
+def lotes_semana():
+    """Lotes producidos agrupados por día — últimos 7 días."""
+    try:
+        from datetime import date, timedelta
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT
+                DATE(fecha_produccion) as dia,
+                COUNT(*)              as num_lotes,
+                COALESCE(SUM(cantidad_producida), 0) as total_piezas
+            FROM produccion
+            WHERE fecha_produccion >= CURRENT_DATE - INTERVAL '6 days'
+            GROUP BY DATE(fecha_produccion)
+            ORDER BY dia ASC
+        """)
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+
+        dias_map = {str(r[0]): {"num_lotes": r[1], "total_piezas": int(r[2])} for r in rows}
+        resultado = []
+        for i in range(7):
+            dia = str(date.today() - timedelta(days=6 - i))
+            resultado.append({
+                "dia": dia,
+                "num_lotes":    dias_map.get(dia, {}).get("num_lotes", 0),
+                "total_piezas": dias_map.get(dia, {}).get("total_piezas", 0)
+            })
+        return resultado
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
