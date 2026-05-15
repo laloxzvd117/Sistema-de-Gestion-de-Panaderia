@@ -92,14 +92,17 @@ const PAGE_TITLES = {
   inventario: 'Insumos', alertas: 'Alertas de Stock', recetas: 'Recetas',
   produccion: 'Producción', productos: 'Productos',
   proveedores: 'Proveedores', empleados: 'Recursos Humanos',
-  reportes: 'Reportes', logs: 'Historial de Actividad', perfil: 'Mi Perfil'
+  reportes: 'Reportes', logs: 'Historial de Actividad', backup: 'Gestión de Backups', perfil: 'Mi Perfil'
 };
 
 // Permisos: 1=Gerente(todo), 2=Panadero, 3=Cajero
 const PAGINAS_PERMITIDAS = {
-  1: ['dashboard','pos','inventario','alertas','recetas','produccion','productos','proveedores','empleados','reportes','logs','perfil'],
-  2: ['dashboard','pos','alertas','recetas','produccion','perfil'],
+  1: ['dashboard','pos','inventario','alertas','recetas','produccion','productos','proveedores','empleados','reportes','logs','backup','perfil'],
+  2: ['dashboard','alertas','recetas','produccion','perfil'],
   3: ['dashboard','pos','perfil'],
+  4: ['dashboard','inventario','productos','proveedores','alertas','perfil'],
+  5: ['dashboard','reportes','logs','perfil'],
+  6: ['dashboard','empleados','logs','perfil'],
 };
 
 function configurarSidebarPorRol() {
@@ -111,12 +114,26 @@ function configurarSidebarPorRol() {
   });
 }
 
-function showPage(page) {
+async function showPage(page) {
   const permisos = usuario?.permisos || 3;
   const permitidas = PAGINAS_PERMITIDAS[permisos] || PAGINAS_PERMITIDAS[3];
   if (!permitidas.includes(page)) return toast('No tienes acceso a este módulo', 'error');
+
+  // ── Carga lazy del componente HTML ───────────────────────
+  const pageEl = document.getElementById(`page-${page}`);
+  if (!pageEl.dataset.loaded) {
+    try {
+      const res  = await fetch(`/components/${page}.html?v=refactor01`);
+      const html = await res.text();
+      pageEl.innerHTML = html;
+      pageEl.dataset.loaded = 'true';
+    } catch(e) {
+      console.error(`Error cargando componente ${page}:`, e);
+    }
+  }
+
   document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
-  document.getElementById(`page-${page}`).classList.add('active');
+  pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.getAttribute('onclick')?.includes(page)) n.classList.add('active');
@@ -125,7 +142,7 @@ function showPage(page) {
   const loaders = { dashboard: loadDashboard, pos: loadPOS, inventario: loadInventario,
                     alertas: loadAlertas, recetas: loadRecetas, produccion: loadProduccion, productos: loadProductos,
                     proveedores: loadProveedores, empleados: loadEmpleados, reportes: loadReportes,
-                    logs: loadLogs, perfil: loadPerfil };
+                    logs: loadLogs, backup: loadBackup, perfil: loadPerfil };
   loaders[page]?.();
 }
 
