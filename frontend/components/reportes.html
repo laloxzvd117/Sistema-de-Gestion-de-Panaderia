@@ -1,0 +1,25 @@
+<div class="section-header"><h2>📊 Reportes</h2></div>
+<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end">
+  <div>
+    <label class="form-label">Desde</label>
+    <input id="rep-fi" class="form-control" type="date" style="width:160px"/>
+  </div>
+  <div>
+    <label class="form-label">Hasta</label>
+    <input id="rep-ff" class="form-control" type="date" style="width:160px"/>
+  </div>
+  <div style="align-self:flex-end">
+    <button class="btn btn-primary" onclick="generarReportePDF()">📄 Exportar PDF</button>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('volumen', this)">📊 Volumen de Ventas</button>
+  <button class="tab-btn" onclick="switchTab('rentabilidad', this)">💰 Rentabilidad Neta</button>
+  <button class="tab-btn" onclick="switchTab('mermas', this)">⚠️ Mermas Productivas</button>
+  <button class="tab-btn" id="tab-btn-compras" onclick="switchTab('compras', this)" style="display:none">📦 Gastos y Compras</button>
+</div>
+<div class="card" style="padding:0">
+  <div class="table-wrap" id="rep-table-wrap">
+    <table id="tbl-rep"><thead></thead><tbody></tbody></table>
+  </div>
+</div>

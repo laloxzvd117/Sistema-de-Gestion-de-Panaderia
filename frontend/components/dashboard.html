@@ -1,0 +1,29 @@
+<div class="kpi-grid" id="kpi-grid">
+  <div class="kpi-card" id="kpi-card-ventas"><div class="kpi-label">Ventas hoy</div><div class="kpi-value" id="kpi-ventas">—</div><div class="kpi-sub">transacciones</div></div>
+  <div class="kpi-card" id="kpi-card-ingresos"><div class="kpi-label">Ingresos hoy</div><div class="kpi-value" id="kpi-ingresos">—</div><div class="kpi-sub">pesos MXN</div></div>
+  <div class="kpi-card" id="kpi-card-stock"><div class="kpi-label">Stock bajo</div><div class="kpi-value" id="kpi-stock">—</div><div class="kpi-sub">insumos críticos</div></div>
+  <div class="kpi-card" id="kpi-card-emp"><div class="kpi-label">Empleados activos</div><div class="kpi-value" id="kpi-emp">—</div><div class="kpi-sub">en nómina</div></div>
+  <div class="kpi-card" id="kpi-card-lotes"><div class="kpi-label">Lotes hoy</div><div class="kpi-value" id="kpi-lotes">—</div><div class="kpi-sub">producción</div></div>
+  <div class="kpi-card" id="kpi-card-compras" style="display:none"><div class="kpi-label">Compras del mes</div><div class="kpi-value" id="kpi-compras">—</div><div class="kpi-sub">gasto en proveedores</div></div>
+</div>
+<div id="dash-grafica-cont" style="display:none;margin-bottom:20px">
+  <div class="card">
+    <div class="card-title" id="dash-grafica-titulo">📈 Ingresos y ventas — últimos 7 días</div>
+    <div style="height:220px;position:relative">
+      <canvas id="dash-chart"></canvas>
+    </div>
+  </div>
+</div>
+<div class="card" id="dash-tabla-cont">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="card-title" id="dash-tabla-titulo" style="margin:0">📋 Últimas ventas</div>
+    <button class="btn btn-secondary btn-sm" onclick="loadDashboard()" title="Recargar">🔄 Recargar</button>
+  </div>
+  <div class="table-wrap">
+    <table id="tbl-ventas-dash">
+      <thead><tr><th>#</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Fecha</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="dash-paginacion" style="display:flex;gap:6px;align-items:center;margin-top:14px;flex-wrap:wrap"></div>
+</div>

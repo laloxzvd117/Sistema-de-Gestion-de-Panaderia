@@ -1,0 +1,27 @@
+<div class="pos-layout">
+  <div class="pos-left">
+    <div class="card" style="padding:16px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="search-box" style="flex:1;min-width:180px">
+          <span class="icon">🔍</span>
+          <input id="pos-search" class="form-control" placeholder="Buscar producto…" oninput="buscarProductosPOS()"/>
+        </div>
+        <select id="pos-cliente" class="form-control" style="width:200px" onchange="recalcularTotales()"></select>
+      </div>
+    </div>
+    <div id="pos-products" class="product-grid"></div>
+  </div>
+  <div class="pos-right">
+    <div style="padding:16px;border-bottom:1px solid var(--border);font-weight:600;font-size:.95rem">🛒 Carrito</div>
+    <div class="carrito-items" id="carrito-items">
+      <div class="empty-state"><div class="icon">🛒</div><p>Agrega productos al carrito</p></div>
+    </div>
+    <div class="carrito-totales">
+      <div class="tot-row"><span>Subtotal</span><span id="tot-sub">$0.00</span></div>
+      <div class="tot-row"><span id="tot-desc-lbl">Descuento (0%)</span><span id="tot-desc">-$0.00</span></div>
+      <div class="tot-row"><span>IVA 16%</span><span id="tot-iva">$0.00</span></div>
+      <div class="tot-row total"><span>Total</span><span id="tot-total">$0.00</span></div>
+      <button class="btn btn-success" style="width:100%;margin-top:12px;padding:13px;font-size:.95rem" onclick="abrirModalCobro()">💰 Cobrar</button>
+    </div>
+  </div>
+</div>

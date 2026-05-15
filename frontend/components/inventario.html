@@ -1,0 +1,18 @@
+<div class="section-header">
+  <h2>📦 Insumos</h2>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="search-box">
+      <span class="icon">🔍</span>
+      <input id="insumos-busqueda" class="form-control" placeholder="Buscar insumo…" oninput="filtrarInsumos(this.value)" style="width:200px"/>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModalInsumo()">+ Nuevo insumo</button>
+  </div>
+</div>
+<div class="card" style="padding:0">
+  <div class="table-wrap">
+    <table id="tbl-inv">
+      <thead><tr><th>#</th><th>Nombre</th><th>Stock</th><th>Unidad</th><th>Costo Unit.</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>

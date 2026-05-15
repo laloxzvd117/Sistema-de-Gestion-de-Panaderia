@@ -1,0 +1,18 @@
+<div class="section-header">
+  <h2>🍞 Productos</h2>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="search-box">
+      <span class="icon">🔍</span>
+      <input id="productos-busqueda" class="form-control" placeholder="Buscar producto…" oninput="filtrarProductos(this.value)" style="width:200px"/>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModalProducto()">+ Nuevo producto</button>
+  </div>
+</div>
+<div class="card" style="padding:0">
+  <div class="table-wrap">
+    <table id="tbl-productos">
+      <thead><tr><th>#</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Tiempo Elab.</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>

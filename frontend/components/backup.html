@@ -1,0 +1,61 @@
+<div class="section-header">
+  <h2>💾 Gestión de Backups</h2>
+  <button id="btn-backup-ahora" class="btn btn-primary" onclick="generarBackupAhora()">💾 Generar Backup Ahora</button>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+  <div class="card" style="text-align:center;padding:20px;border-left:4px solid var(--amber)">
+    <div style="font-size:.75rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Backup Programado</div>
+    <div id="backup-estado-badge" style="font-size:1.1rem;font-weight:700">🔴 Inactivo</div>
+  </div>
+  <div class="card" style="text-align:center;padding:20px;border-left:4px solid #059669">
+    <div style="font-size:.75rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Contenido</div>
+    <div style="font-size:.9rem;font-weight:600;color:var(--brown)">SQL + Tickets + Reportes</div>
+  </div>
+  <div class="card" style="text-align:center;padding:20px;border-left:4px solid #3B82F6">
+    <div style="font-size:.75rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Formato</div>
+    <div style="font-size:.9rem;font-weight:600;color:var(--brown)">ZIP comprimido</div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start">
+  <div class="card" style="padding:0">
+    <div style="padding:16px 20px;font-weight:600;border-bottom:1px solid var(--border);font-size:.95rem">📋 Historial de Backups</div>
+    <div class="table-wrap">
+      <table id="tbl-backups">
+        <thead><tr><th>Archivo</th><th>Fecha</th><th>Tamaño</th><th>Acciones</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">⏰ Backup Programado</div>
+    <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <label class="form-label" style="margin:0">Activar backup automático</label>
+      <input type="checkbox" id="backup-activo" onchange="actualizarEstadoProgramacion(this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:var(--amber)"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Frecuencia</label>
+      <select id="backup-frecuencia" class="form-control" onchange="toggleDiaSemana()">
+        <option value="diario">Diario</option>
+        <option value="semanal">Semanal</option>
+      </select>
+    </div>
+    <div class="form-group" id="backup-dia-cont" style="display:none">
+      <label class="form-label">Día de la semana</label>
+      <select id="backup-dia-semana" class="form-control">
+        <option value="monday">Lunes</option>
+        <option value="tuesday">Martes</option>
+        <option value="wednesday">Miércoles</option>
+        <option value="thursday">Jueves</option>
+        <option value="friday">Viernes</option>
+        <option value="saturday">Sábado</option>
+        <option value="sunday">Domingo</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hora del backup</label>
+      <input id="backup-hora" class="form-control" type="time" value="02:00"/>
+      <div style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Se recomienda en horas de baja actividad.</div>
+    </div>
+    <button id="btn-guardar-prog" class="btn btn-primary" style="width:100%" onclick="guardarProgramacion()">💾 Guardar Programación</button>
+  </div>
+</div>

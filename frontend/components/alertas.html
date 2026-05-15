@@ -1,0 +1,32 @@
+<div class="section-header">
+  <h2>🔔 Alertas de Stock</h2>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="form-group" style="margin:0;display:flex;align-items:center;gap:8px">
+      <label class="form-label" style="margin:0;white-space:nowrap">Mínimo global (u):</label>
+      <input id="alerta-minimo" class="form-control" type="number" value="10" min="1" style="width:80px" oninput="loadAlertas()"/>
+    </div>
+    <button class="btn btn-secondary" onclick="loadAlertas()">🔄 Actualizar</button>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+  <div class="card" style="border-left:4px solid #EF4444;text-align:center;padding:20px">
+    <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Críticos (stock = 0)</div>
+    <div id="alerta-kpi-critico" style="font-size:2rem;font-weight:700;color:#EF4444">0</div>
+  </div>
+  <div class="card" style="border-left:4px solid #D97706;text-align:center;padding:20px">
+    <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Stock Bajo</div>
+    <div id="alerta-kpi-bajo" style="font-size:2rem;font-weight:700;color:#D97706">0</div>
+  </div>
+  <div class="card" style="border-left:4px solid #059669;text-align:center;padding:20px">
+    <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px">Insumos OK</div>
+    <div id="alerta-kpi-ok" style="font-size:2rem;font-weight:700;color:#059669">0</div>
+  </div>
+</div>
+<div class="card" style="padding:0">
+  <div class="table-wrap">
+    <table id="tbl-alertas">
+      <thead><tr><th>Insumo</th><th>Stock Actual</th><th>Unidad</th><th>Mínimo</th><th>Estado</th><th>Acción</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+<div class="section-header">
+  <h2>📋 Recetas</h2>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="search-box">
+      <span class="icon">🔍</span>
+      <input id="recetas-busqueda" class="form-control" placeholder="Buscar receta o producto…" oninput="filtrarRecetas(this.value)" style="width:220px"/>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModalReceta()">+ Nueva receta</button>
+  </div>
+</div>
+<div id="recetas-lista"></div>
