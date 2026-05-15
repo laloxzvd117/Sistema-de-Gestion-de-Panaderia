@@ -47,28 +47,45 @@ def reporte_rentabilidad(fecha_inicio: str = None, fecha_fin: str = None):
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
-            WITH CostoPromedio AS (
-                SELECT id_producto, AVG(costo) as costo_medio
-                FROM produccion
-                WHERE fecha_produccion BETWEEN %s AND %s
-                GROUP BY id_producto
+            WITH CostoReceta AS (
+                SELECT r.id_producto,
+                       SUM(dr.cantidad_unidad * COALESCE(i.costo_unitario, 0)) as costo_lote
+                FROM recetas r
+                JOIN detalle_receta dr ON dr.id_receta = r.id_receta
+                JOIN inventario i      ON i.id_inventario = dr.id_inventario
+                GROUP BY r.id_producto
+            ),
+            VentasPeriodo AS (
+                SELECT dv.id_producto,
+                       SUM(dv.total_fila) as ingreso_bruto,
+                       SUM(dv.cantidad)   as unidades_vendidas
+                FROM detalle_ventas dv
+                JOIN ventas v ON dv.id_venta = v.id_venta
+                WHERE v.fecha::date BETWEEN %s AND %s
+                GROUP BY dv.id_producto
             )
-            SELECT dv.id_producto, p.nombre,
-                   SUM(dv.total_fila) as ingreso_bruto,
-                   SUM(dv.cantidad * COALESCE(cp.costo_medio, 0)) as costo_manufactura,
-                   SUM(dv.total_fila) - SUM(dv.cantidad * COALESCE(cp.costo_medio, 0)) as ganancia_neta
-            FROM detalle_ventas dv
-            JOIN ventas v ON dv.id_venta = v.id_venta
-            JOIN productos p ON dv.id_producto = p.id_producto
-            LEFT JOIN CostoPromedio cp ON p.id_producto = cp.id_producto
-            WHERE v.fecha::date BETWEEN %s AND %s
-            GROUP BY dv.id_producto, p.nombre
-            ORDER BY ganancia_neta DESC LIMIT 5
-        """, (fecha_inicio, fecha_fin, fecha_inicio, fecha_fin))
+            SELECT p.id_producto, p.nombre, p.precio,
+                   COALESCE(cr.costo_lote, 0) / 10.0 as costo_unitario,
+                   COALESCE(vp.ingreso_bruto, 0) as ingreso_bruto,
+                   COALESCE(vp.unidades_vendidas, 0) as unidades_vendidas,
+                   ROUND((p.precio - COALESCE(cr.costo_lote, 0) / 10.0)::numeric, 2) as margen_pieza,
+                   CASE WHEN p.precio > 0
+                        THEN ROUND(((p.precio - COALESCE(cr.costo_lote, 0) / 10.0) / p.precio * 100)::numeric, 1)
+                        ELSE 0 END as margen_pct
+            FROM productos p
+            LEFT JOIN CostoReceta cr ON p.id_producto = cr.id_producto
+            LEFT JOIN VentasPeriodo vp ON p.id_producto = vp.id_producto
+            WHERE p.activo = 1 AND COALESCE(vp.unidades_vendidas, 0) > 0
+            ORDER BY margen_pct DESC
+        """, (fecha_inicio, fecha_fin))
         rows = cur.fetchall()
         cur.close(); conn.close()
-        return [{"id": r[0], "producto": r[1], "ingreso_bruto": float(r[2]),
-                 "costo_manufactura": float(r[3]), "ganancia_neta": float(r[4])} for r in rows]
+        return [{
+            "id": r[0], "producto": r[1], "precio": float(r[2]),
+            "costo_unitario": float(r[3]), "ingreso_bruto": float(r[4]),
+            "unidades_vendidas": float(r[5]), "margen_pieza": float(r[6]),
+            "margen_pct": float(r[7])
+        } for r in rows]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -248,15 +265,23 @@ def exportar_xlsx(tipo: str, fecha_inicio: str = None, fecha_fin: str = None):
         fi = fecha_inicio or "2000-01-01"
         ff = fecha_fin   or "2099-12-31"
         cur.execute("""
+            WITH CostoReceta AS (
+                SELECT r.id_producto,
+                       SUM(dr.cantidad_unidad * COALESCE(i.costo_unitario, 0)) as costo_unit
+                FROM recetas r
+                JOIN detalle_receta dr ON dr.id_receta = r.id_receta
+                JOIN inventario i      ON i.id_inventario = dr.id_inventario
+                GROUP BY r.id_producto
+            )
             SELECT p.nombre,
                    SUM(dv.cantidad) as unidades,
                    SUM(dv.total_fila) as ingresos,
-                   ROUND(AVG(prod.costo),4) as costo_unit,
-                   SUM(dv.total_fila) - SUM(dv.cantidad * prod.costo) as ganancia
+                   ROUND(COALESCE(MAX(cr.costo_unit), 0), 4) as costo_unit,
+                   SUM(dv.total_fila) - SUM(dv.cantidad * COALESCE(cr.costo_unit, 0)) as ganancia
             FROM detalle_ventas dv
             JOIN productos p ON dv.id_producto = p.id_producto
             JOIN ventas v ON dv.id_venta = v.id_venta
-            LEFT JOIN produccion prod ON prod.id_producto = p.id_producto
+            LEFT JOIN CostoReceta cr ON p.id_producto = cr.id_producto
             WHERE v.fecha BETWEEN %s AND %s
             GROUP BY p.nombre ORDER BY ganancia DESC
         """, (fi, ff))
@@ -355,3 +380,109 @@ def exportar_xlsx(tipo: str, fecha_inicio: str = None, fecha_fin: str = None):
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={nombre_archivo}"}
     )
+
+# ── Guardar Reporte PDF en documents/Reportes/ ───────────────
+from fastapi import Body
+from fastapi.responses import JSONResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import mm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from pydantic import BaseModel
+from typing import List
+import os
+
+REPORTES_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "documents", "Reportes")
+os.makedirs(REPORTES_DIR, exist_ok=True)
+
+class FilaReporte(BaseModel):
+    celdas: List[str]
+
+class GuardarReporteRequest(BaseModel):
+    tipo: str
+    periodo: str
+    encabezados: List[str]
+    filas: List[FilaReporte]
+
+@router.post("/guardar-pdf")
+def guardar_reporte_pdf(data: GuardarReporteRequest):
+    """Genera y guarda el reporte como PDF en documents/Reportes/"""
+    try:
+        titulos = {
+            "volumen":       "Volumen de Ventas",
+            "rentabilidad":  "Rentabilidad Neta",
+            "mermas":        "Mermas Productivas",
+        }
+        titulo = titulos.get(data.tipo, data.tipo.capitalize())
+        fecha_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+        # Numeración automática: contar archivos existentes del mismo tipo
+        existentes = [f for f in os.listdir(REPORTES_DIR)
+                      if f.startswith(f"Reporte {titulo}") and f.endswith(".pdf")]
+        siguiente = str(len(existentes) + 1).zfill(4)
+        nombre_archivo = f"Reporte {titulo}{siguiente}.pdf"
+        ruta = os.path.join(REPORTES_DIR, nombre_archivo)
+
+        doc = SimpleDocTemplate(ruta, pagesize=letter,
+                                leftMargin=15*mm, rightMargin=15*mm,
+                                topMargin=15*mm, bottomMargin=15*mm)
+
+        s_titulo  = ParagraphStyle("t",  fontSize=18, fontName="Helvetica-Bold",
+                                   alignment=TA_CENTER, textColor=colors.HexColor("#3D1A00"), spaceAfter=2*mm)
+        s_emp     = ParagraphStyle("e",  fontSize=11, fontName="Helvetica-Bold",
+                                   alignment=TA_CENTER, textColor=colors.HexColor("#D97706"), spaceAfter=1*mm)
+        s_sub     = ParagraphStyle("s",  fontSize=9,  fontName="Helvetica",
+                                   alignment=TA_CENTER, textColor=colors.HexColor("#888888"), spaceAfter=3*mm)
+        s_footer  = ParagraphStyle("ft", fontSize=8,  fontName="Helvetica",
+                                   alignment=TA_CENTER, textColor=colors.HexColor("#aaaaaa"))
+
+        story = []
+
+        # Cabecera
+        story.append(Paragraph("🥖 ERP Panadería", s_emp))
+        story.append(Paragraph("Sistema de Gestión Integral", s_sub))
+        story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor("#D97706")))
+        story.append(Spacer(1, 4*mm))
+        story.append(Paragraph(f"📊 {titulo}", s_titulo))
+        story.append(Paragraph(f"Período: {data.periodo}  |  Generado: {fecha_str}", s_sub))
+        story.append(Spacer(1, 4*mm))
+
+        # Tabla
+        n_cols   = len(data.encabezados)
+        ancho_pg = letter[0] - 30*mm
+        col_w    = [ancho_pg / n_cols] * n_cols
+
+        tabla_data = [data.encabezados] + [f.celdas for f in data.filas]
+        tabla = Table(tabla_data, colWidths=col_w, repeatRows=1)
+        tabla.setStyle(TableStyle([
+            # Encabezado
+            ("BACKGROUND",  (0,0), (-1,0),  colors.HexColor("#3D1A00")),
+            ("TEXTCOLOR",   (0,0), (-1,0),  colors.white),
+            ("FONTNAME",    (0,0), (-1,0),  "Helvetica-Bold"),
+            ("FONTSIZE",    (0,0), (-1,0),  9),
+            ("ALIGN",       (0,0), (-1,0),  "CENTER"),
+            ("TOPPADDING",  (0,0), (-1,0),  6),
+            ("BOTTOMPADDING",(0,0),(-1,0),  6),
+            # Datos
+            ("FONTNAME",    (0,1), (-1,-1), "Helvetica"),
+            ("FONTSIZE",    (0,1), (-1,-1), 8.5),
+            ("ALIGN",       (0,1), (-1,-1), "LEFT"),
+            ("ROWBACKGROUNDS",(0,1),(-1,-1),[colors.white, colors.HexColor("#FFF8EC")]),
+            ("LINEBELOW",   (0,0), (-1,-1), 0.3, colors.HexColor("#DDDDDD")),
+            ("TOPPADDING",  (0,1), (-1,-1), 4),
+            ("BOTTOMPADDING",(0,1),(-1,-1), 4),
+            ("LEFTPADDING", (0,0), (-1,-1), 6),
+        ]))
+        story.append(tabla)
+        story.append(Spacer(1, 8*mm))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#cccccc")))
+        story.append(Spacer(1, 2*mm))
+        story.append(Paragraph(f"ERP Panadería — Reporte generado el {fecha_str}", s_footer))
+
+        doc.build(story)
+        url_pdf = f"/documents/Reportes/{nombre_archivo}"
+        return {"ok": True, "archivo": nombre_archivo, "ruta": ruta, "url_pdf": url_pdf}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
