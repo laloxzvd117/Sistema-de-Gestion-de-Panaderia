@@ -129,6 +129,40 @@ def obtener_compras(limite: int = 50):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/compras-semana")
+def compras_semana():
+    """Gastos en compras agrupados por día — últimos 7 días."""
+    try:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT
+                DATE(fecha) as dia,
+                COUNT(*)    as num_compras,
+                COALESCE(SUM(total), 0) as gasto_total
+            FROM compra
+            WHERE fecha >= CURRENT_DATE - INTERVAL '6 days'
+            GROUP BY DATE(fecha)
+            ORDER BY dia ASC
+        """)
+        rows = cur.fetchall()
+        cur.close(); conn.close()
+
+        # Rellenar días sin compras con 0
+        from datetime import date, timedelta
+        dias_map = {str(r[0]): {"num_compras": r[1], "gasto_total": float(r[2])} for r in rows}
+        resultado = []
+        for i in range(7):
+            dia = str(date.today() - timedelta(days=6 - i))
+            resultado.append({
+                "dia": dia,
+                "num_compras": dias_map.get(dia, {}).get("num_compras", 0),
+                "gasto_total": dias_map.get(dia, {}).get("gasto_total", 0.0)
+            })
+        return resultado
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/compras/{id_compra}")
 def detalle_compra(id_compra: int):
     try:
