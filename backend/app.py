@@ -17,7 +17,7 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
             response.headers['Expires'] = '0'
         return response
 
-from backend.routers import auth, inventario, empleados, productos, ventas, produccion, reportes, recetas, proveedores, logs
+from backend.routers import auth, inventario, empleados, productos, ventas, produccion, reportes, recetas, proveedores, logs, backup
 
 app = FastAPI(
     title       = "ERP Panadería",
@@ -44,7 +44,12 @@ app.include_router(reportes.router,    prefix="/api/reportes",    tags=["Reporte
 app.include_router(recetas.router,     prefix="/api/recetas",     tags=["Recetas"])
 app.include_router(proveedores.router, prefix="/api/proveedores", tags=["Proveedores"])
 app.include_router(logs.router,        prefix="/api/logs",        tags=["Logs"])
+app.include_router(backup.router,      prefix="/api/backup",      tags=["Backup"])
 
+# Servir carpeta documents/ para que los PDFs sean accesibles desde el navegador
+app.mount("/documents", StaticFiles(directory="documents"), name="documents")
+# Servir componentes HTML para lazy loading
+app.mount("/components", StaticFiles(directory="frontend/components"), name="components")
 app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
 
 @app.get("/health", tags=["Status"])
